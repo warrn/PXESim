@@ -12,7 +12,7 @@ uint8_t *array_from_uint32(uint32_t number) {
     array[2] = (uint8_t) (number >> 16);
     array[1] = (uint8_t) (number >> 8);
     array[0] = (uint8_t) (number);
-    return array;
+    return array; //TODO: Memory leak
 }
 
 
