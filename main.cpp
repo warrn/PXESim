@@ -56,6 +56,7 @@ bool callback(const PDU &pdu) {
 int main() {
     SnifferConfiguration config;
     config.set_promisc_mode(true);
+    config.set_timeout(1);
     config.set_filter("icmp or arp or udp port 68");
     Sniffer sniff("eth1", config);
     auto eth = client.create_dhcp_discover();
