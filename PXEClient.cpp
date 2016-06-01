@@ -94,6 +94,7 @@ const EthernetII PXEClient::create_dhcp_request(const IPv4Address &dhcp_server_a
 }
 
 const bool PXEClient::dhcp_acknowledged(const DHCP &pdu) {
+    if (this->_state >= DHCPAcknowledged) return true;
     if (pdu.yiaddr() == this->_dhcp_client_address && pdu.chaddr() == this->_mac_address) {
         this->_tftp_server_address = (char *) pdu.search_option((DHCP::OptionTypes) 66)->data_ptr();
         std::cout << "TFTP Server Saved: " << this->_tftp_server_address << "\n";
@@ -118,7 +119,7 @@ const EthernetII PXEClient::create_arp_request_to_dhcp_server() {
 
 const EthernetII PXEClient::create_arp_reply_to_dhcp_server(const HWAddress<6> &dhcp_server_mac_address) {
     EthernetII eth(dhcp_server_mac_address, this->_mac_address);
-    auto *arp = new ARP(_dhcp_server_address, _dhcp_client_address, "00:00:00:00:00:00", _mac_address);
+    auto *arp = new ARP(_dhcp_server_address, _dhcp_client_address, dhcp_server_mac_address, _mac_address);
     arp->opcode(ARP::REPLY);
     eth.inner_pdu(arp);
 
@@ -161,3 +162,6 @@ const IPv4Address &PXEClient::get_dhcp_client_address() {
 }
 
 
+const ClientState PXEClient::get_state() const {
+    return _state;
+}

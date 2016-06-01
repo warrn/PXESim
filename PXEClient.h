@@ -36,17 +36,28 @@ public:
 
     const Tins::EthernetII create_arp_request_to_dhcp_server();
 
-    const Tins::EthernetII create_arp_reply_to_dhcp_server(const Tins::HWAddress<6> &dhcp_server_mac_address);
+    const Tins::EthernetII create_arp_reply_to_dhcp_server(
+            const Tins::HWAddress<6> &dhcp_server_mac_address
+    );
 
-    const Tins::EthernetII create_ping(const Tins::IPv4Address &ip_address,
-                                       const Tins::HWAddress<6> &mac_address) const;
+    const Tins::EthernetII create_ping(
+            const Tins::IPv4Address &ip_address,
+            const Tins::HWAddress<6> &mac_address
+    ) const;
 
-    const Tins::EthernetII create_pong(const Tins::IPv4Address &ip_address, const Tins::HWAddress<6> &mac_address,
-                                       const Tins::ICMP &icmp) const;
+    const Tins::EthernetII create_pong(
+            const Tins::IPv4Address &ip_address,
+            const Tins::HWAddress<6> &mac_address,
+            const Tins::ICMP &icmp
+    ) const;
 
-    const bool dhcp_acknowledged(const Tins::DHCP &pdu);
+    const bool dhcp_acknowledged(
+            const Tins::DHCP &pdu
+    );
 
     const Tins::IPv4Address &get_dhcp_client_address();
+
+    const ClientState get_state() const;
 
 private:
     Tins::HWAddress<6> _mac_address;
