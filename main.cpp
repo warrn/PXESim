@@ -11,10 +11,24 @@ bool callback(const PDU &pdu) {
         const auto arp = pdu.rfind_pdu<ARP>();
         if (arp.opcode() == arp.ARP::REQUEST) {
             std::cout << "ARP Request: " << arp.sender_ip_addr() << " ->? " << arp.target_ip_addr() << "\n";
+            if (arp.target_ip_addr() == client.get_dhcp_client_address()) {
+                auto reply = client.create_arp_reply_to_dhcp_server(arp.sender_hw_addr());
+                sender.send(reply);
+            }
         }
         if (arp.opcode() == ARP::REPLY) {
             std::cout << "ARP Reply: " << arp.sender_ip_addr() << " @ " << arp.sender_hw_addr() << " -> " <<
             arp.target_ip_addr() << "\n";
+        }
+    } else if (pdu.find_pdu<ICMP>()) {
+        const auto eth = pdu.rfind_pdu<EthernetII>();
+        const auto icmp = pdu.rfind_pdu<ICMP>();
+        const auto ip = pdu.rfind_pdu<IP>();
+        if (icmp.type() == ICMP::ECHO_REQUEST && ip.dst_addr() == client.get_dhcp_client_address()) {
+            std::cout << "Ping received from: " << ip.src_addr() << " to client " << ip.dst_addr() << "\n";
+            auto reply = client.create_pong(ip.src_addr(), eth.src_addr(), icmp);
+            sender.send(reply);
+            std::cout << "Pong Sent.\n";
         }
     } else {
         auto dhcp = pdu.rfind_pdu<RawPDU>().to<DHCP>();
@@ -42,7 +56,7 @@ bool callback(const PDU &pdu) {
 int main() {
     SnifferConfiguration config;
     config.set_promisc_mode(true);
-    config.set_filter("arp or udp port 68");
+    config.set_filter("icmp or arp or udp port 68");
     Sniffer sniff("eth1", config);
     auto eth = client.create_dhcp_discover();
     sender.send(eth);
