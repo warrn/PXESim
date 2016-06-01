@@ -161,7 +161,6 @@ const IPv4Address &PXEClient::get_dhcp_client_address() {
     return this->_dhcp_client_address;
 }
 
-
 const ClientState PXEClient::get_state() const {
     return _state;
 }
