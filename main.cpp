@@ -15,6 +15,7 @@ bool sniff(Sniffer &sniffer) {
                 if (arp.target_ip_addr() == client.get_dhcp_client_address()) {
                     auto reply = client.create_arp_reply_to_dhcp_server(arp.sender_hw_addr());
                     sender.send(reply);
+                    std::cout << "ARP Reply sent on behalf of PXEClient (" << client.get_dhcp_client_address() << ").\n";
                 }
             }
             if (arp.opcode() == ARP::REPLY) {
@@ -29,7 +30,7 @@ bool sniff(Sniffer &sniffer) {
                 std::cout << "Ping received from: " << ip.src_addr() << " to client " << ip.dst_addr() << "\n";
                 auto reply = client.create_pong(ip.src_addr(), eth.src_addr(), icmp);
                 sender.send(reply);
-                std::cout << "Pong sent from: " << ip.dst_addr() << " to requestee " << ip.src_addr() << "\n";
+                std::cout << "Pong sent from PXEClient: " << ip.dst_addr() << " to requestee " << ip.src_addr() << "\n";
             }
         } else {
             auto dhcp = pdu->rfind_pdu<RawPDU>().to<DHCP>();

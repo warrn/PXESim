@@ -1,0 +1,3 @@
+[submodule "libtins-TFTP"]
+	path = libtins-TFTP
+	url = https://github.com/nelsonw2014/libtins-TFTP
