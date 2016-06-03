@@ -1,11 +1,12 @@
 #include "PXEClient.h"
-
+#include "tftp.h"
 using namespace Tins;
 
 PacketSender sender("eth1");
 PXEClient client;
 
 bool sniff(Sniffer &sniffer) {
+    // TODO: Refactor this mess
     for (Packet &pkt: sniffer) {
         PDU *pdu = pkt.pdu();
         if (pdu->find_pdu<ARP>()) {
@@ -21,6 +22,12 @@ bool sniff(Sniffer &sniffer) {
             if (arp.opcode() == ARP::REPLY) {
                 std::cout << "ARP Reply: " << arp.sender_ip_addr() << " @ " << arp.sender_hw_addr() << " -> " <<
                 arp.target_ip_addr() << "\n";
+                if (arp.target_ip_addr() == client.get_dhcp_client_address()) {
+                    client.set_tftp_hw_address(arp.sender_hw_addr());
+                    auto tftp_read = client.create_tftp_read();
+                    sender.send(tftp_read);
+                    std::cout << "Sent TFTP READ Packet.\n";
+                }
             }
         } else if (pdu->find_pdu<ICMP>()) {
             const auto eth = pdu->rfind_pdu<EthernetII>();
@@ -32,7 +39,12 @@ bool sniff(Sniffer &sniffer) {
                 sender.send(reply);
                 std::cout << "Pong sent from PXEClient: " << ip.dst_addr() << " to requestee " << ip.src_addr() << "\n";
             }
-        } else {
+        } else if (pdu->find_pdu<UDP>() && pdu->rfind_pdu<UDP>().dport() == 1024) {
+            const auto tftp = pdu->rfind_pdu<RawPDU>().to<TFTP>();
+            std::cout << "Found TFTP Packet Type: " << (uint16_t) tftp.opcode() << "\n";
+            std::cout << "Total size: " << tftp.search_option("tsize").second << " bytes.\n";
+        } else if (pdu->find_pdu<UDP>() &&
+                   (pdu->rfind_pdu<UDP>().dport() == 67 || pdu->rfind_pdu<UDP>().dport() == 68)) {
             auto dhcp = pdu->rfind_pdu<RawPDU>().to<DHCP>();
             if (dhcp.type() == DHCP::OFFER) {
                 std::cout << "DHCP Server: " << dhcp.siaddr().to_string() << "\n";
@@ -61,7 +73,7 @@ int main() {
     SnifferConfiguration config;
     config.set_promisc_mode(true);
     config.set_timeout(1);
-    config.set_filter("icmp or arp or udp port 68");
+    config.set_filter("icmp or arp or udp port 68 or udp dst port 1024");
     Sniffer sniffer("eth1", config);
     auto eth = client.create_dhcp_discover();
     sender.send(eth);

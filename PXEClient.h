@@ -6,7 +6,7 @@
 #define PXESIM_PXECLIENT_H
 
 #include <tins/tins.h>
-#include <list>
+#include <queue>
 #include <string>
 
 enum ClientState {
@@ -55,12 +55,16 @@ public:
             const Tins::DHCP &pdu
     );
 
+    const Tins::EthernetII create_tftp_read();
+
     const Tins::IPv4Address &get_dhcp_client_address();
 
     const ClientState get_state() const;
 
+    void set_tftp_hw_address(const Tins::HWAddress<6> &mac_address);
+
 private:
-    Tins::HWAddress<6> _mac_address;
+    Tins::HWAddress<6> _client_hw_address, _tftp_hw_address;
 
     Tins::IPv4Address _dhcp_client_address, _dhcp_server_address;
     uint32_t _dhcp_xid;
@@ -68,7 +72,7 @@ private:
     Tins::IPv4Address _tftp_server_address;
     uint16_t _tftp_source_port, _tftp_dest_port;
 
-    std::list<std::string> _files_to_download;
+    std::queue<std::string> _files_to_download;
     ClientState _state;
 
 };
