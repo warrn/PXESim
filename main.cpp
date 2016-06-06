@@ -41,14 +41,24 @@ bool sniff(Sniffer &sniffer) {
                 std::cout << "Pong sent from PXEClient: " << ip.dst_addr() << " to requestee " << ip.src_addr() << "\n";
             }
         } else if (pdu->find_pdu<UDP>() &&
-                   (pdu->rfind_pdu<UDP>().dport() == 1024 || pdu->rfind_pdu<UDP>().dport() == 1024)) {
+                   (pdu->rfind_pdu<UDP>().sport() == 1024 || pdu->rfind_pdu<UDP>().dport() == 1024 ||
+                    pdu->rfind_pdu<UDP>().sport() == 69 || pdu->rfind_pdu<UDP>().dport() == 69)) {
             //TFTP Packet
+            const auto udp = pdu->rfind_pdu<UDP>();
             const auto tftp = pdu->rfind_pdu<RawPDU>().to<TFTP>();
             std::cout << "Found TFTP Packet Type: " << (uint16_t) tftp.opcode() << "\n";
             if (tftp.opcode() == TFTP::OPT_ACKNOWLEDGEMENT) {
                 std::cout << "Total size: " << tftp.search_option("tsize").second << " bytes.\n";
                 std::cout << "Block size: " << tftp.search_option("blksize").second << " bytes.\n";
+                client.tftp_ack_options(sender, udp.sport(),
+                                        (uint16_t) atoi(tftp.search_option("blksize").second.data()),
+                                        (uint32_t) atoi(tftp.search_option("tsize").second.data()));
+            } else if (tftp.opcode() == TFTP::DATA) {
+                std::cout << "Block recieved: #" << tftp.block() << ".\n";
+                client.tftp_ack_data(sender, udp.sport(), tftp.data(), tftp.block());
             }
+
+
         } else if (pdu->find_pdu<UDP>() &&
                    (pdu->rfind_pdu<UDP>().dport() == 67 || pdu->rfind_pdu<UDP>().dport() == 68)) {
             // DHCP Packet

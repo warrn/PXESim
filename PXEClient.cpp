@@ -172,12 +172,46 @@ void PXEClient::tftp_read(Tins::PacketSender &sender) {
     tftp->filename(_download_handler.start_new_download());
     tftp->add_option({
                              "blksize",
-                             "4092"
+                             "1432"
                      });
     tftp->add_option({
                              "tsize",
                              "0"
                      });
+    udp->inner_pdu(tftp);
+    ip->inner_pdu(udp);
+    eth.inner_pdu(ip);
+    sender.send(eth);
+}
+
+void PXEClient::tftp_ack_options(Tins::PacketSender &sender, uint16_t dest_port, uint16_t block_size,
+                                 uint32_t total_size) {
+    EthernetII eth(this->_tftp_hw_address, this->_client_hw_address);
+    auto *ip = new IP(this->_tftp_server_address, this->_dhcp_client_address);
+    auto *udp = new UDP(dest_port, 1024);
+    auto *tftp = new TFTP();
+    _download_handler.set_current_download_sizes(block_size, total_size);
+    tftp->opcode(TFTP::ACKNOWLEDGEMENT);
+    tftp->block(0);
+    udp->inner_pdu(tftp);
+    ip->inner_pdu(udp);
+    eth.inner_pdu(ip);
+    sender.send(eth);
+}
+
+void PXEClient::tftp_ack_data(
+        Tins::PacketSender &sender,
+        uint16_t dest_port,
+        const Data &data,
+        uint16_t block_number
+) {
+    EthernetII eth(this->_tftp_hw_address, this->_client_hw_address);
+    auto *ip = new IP(this->_tftp_server_address, this->_dhcp_client_address);
+    auto *udp = new UDP(dest_port, 1024);
+    auto *tftp = new TFTP();
+    _download_handler.append_data(data, block_number);
+    tftp->opcode(TFTP::ACKNOWLEDGEMENT);
+    tftp->block(block_number);
     udp->inner_pdu(tftp);
     ip->inner_pdu(udp);
     eth.inner_pdu(ip);

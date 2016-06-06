@@ -63,11 +63,26 @@ public:
 
     void tftp_read(Tins::PacketSender &sender);
 
+    void tftp_ack_options(
+            Tins::PacketSender &sender,
+            uint16_t dest_port,
+            uint16_t block_size,
+            uint32_t total_size
+    );
+
+    void tftp_ack_data(
+            Tins::PacketSender &sender,
+            uint16_t dest_port,
+            const Data &data,
+            uint16_t block_number
+    );
+
     const Tins::IPv4Address &dhcp_client_address() const;
 
     const ClientState state() const;
 
     void tftp_hw_address(const Tins::HWAddress<6> &mac_address);
+
 
 private:
     Tins::HWAddress<6> _client_hw_address, _dhcp_hw_address, _tftp_hw_address;
