@@ -83,14 +83,13 @@ public:
 
     void tftp_hw_address(const Tins::HWAddress<6> &mac_address);
 
+    const Tins::HWAddress<6> &get_client_hw_address() const { return _client_hw_address; }
 
 private:
     Tins::HWAddress<6> _client_hw_address, _dhcp_hw_address, _tftp_hw_address;
 
     Tins::IPv4Address _dhcp_client_address, _dhcp_server_address, _tftp_server_address;
     uint32_t _dhcp_xid;
-
-    uint16_t _tftp_source_port, _tftp_dest_port;
 
     DownloadHandler _download_handler;
     ClientState _state;
