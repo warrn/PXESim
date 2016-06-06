@@ -6,13 +6,13 @@
 
 using namespace Tins;
 
-uint8_t *array_from_uint32(uint32_t number) {
-    uint8_t *array = new uint8_t[4];
+const std::vector<uint8_t> array_from_uint32(const uint32_t number) {
+    auto array = std::vector<uint8_t>(4, 0); // using a vector for memory management
     array[3] = (uint8_t) (number >> 24);
     array[2] = (uint8_t) (number >> 16);
     array[1] = (uint8_t) (number >> 8);
     array[0] = (uint8_t) (number);
-    return array; //TODO: Memory leak
+    return array;
 }
 
 
@@ -76,12 +76,12 @@ void PXEClient::dhcp_request(Tins::PacketSender &sender, const Tins::IPv4Address
     dhcp->add_option({
                              DHCP::OptionTypes::DHCP_SERVER_IDENTIFIER,
                              4,
-                             array_from_uint32(this->_dhcp_server_address)
+                             array_from_uint32(this->_dhcp_server_address).data()
                      });
     dhcp->add_option({
                              DHCP::OptionTypes::DHCP_REQUESTED_ADDRESS,
                              4,
-                             array_from_uint32(this->_dhcp_client_address)
+                             array_from_uint32(this->_dhcp_client_address).data()
                      });
     dhcp->end();
 

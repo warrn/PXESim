@@ -81,7 +81,7 @@ private:
 
 };
 
-uint8_t *array_from_uint32(uint32_t number);
+const std::vector<uint8_t> array_from_uint32(const uint32_t number);
 
 
 #endif //PXESIM_PXECLIENT_H
