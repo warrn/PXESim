@@ -25,7 +25,7 @@ PXEClient::PXEClient() {
     this->_state = New;
 }
 
-const EthernetII PXEClient::create_dhcp_discover() {
+void PXEClient::dhcp_discover(Tins::PacketSender &sender) {
     srand(time(0));
     this->_dhcp_xid = (uint32_t) rand();
     EthernetII eth(HWAddress<6>::broadcast, this->_client_hw_address);
@@ -50,11 +50,11 @@ const EthernetII PXEClient::create_dhcp_discover() {
     eth.inner_pdu(ip);
 
     this->_state = DHCPDiscovering;
-    return eth;
+    sender.send(eth);
 }
 
-const EthernetII PXEClient::create_dhcp_request(const IPv4Address &dhcp_server_address,
-                                                const IPv4Address &dhcp_client_address) {
+void PXEClient::dhcp_request(Tins::PacketSender &sender, const Tins::IPv4Address &dhcp_server_address,
+                             const Tins::IPv4Address &dhcp_client_address) {
     this->_dhcp_server_address = dhcp_server_address;
     this->_dhcp_client_address = dhcp_client_address;
 
@@ -90,7 +90,7 @@ const EthernetII PXEClient::create_dhcp_request(const IPv4Address &dhcp_server_a
     eth.inner_pdu(ip);
 
     this->_state = DHCPRequested;
-    return eth;
+    sender.send(eth);
 }
 
 const bool PXEClient::dhcp_acknowledged(const DHCP &pdu) {
@@ -106,30 +106,30 @@ const bool PXEClient::dhcp_acknowledged(const DHCP &pdu) {
     return false;
 }
 
-const EthernetII PXEClient::create_arp_request_to_dhcp_server() {
+void PXEClient::arp_request_dhcp_server(Tins::PacketSender &sender) {
     EthernetII eth(HWAddress<6>::broadcast, this->_client_hw_address);
     auto *arp = new ARP(_dhcp_server_address, _dhcp_client_address, HWAddress<6>(), _client_hw_address);
     arp->opcode(ARP::REQUEST);
     eth.inner_pdu(arp);
 
     this->_state = ARPRequested;
-    return eth;
+    sender.send(eth);
 }
 
-const EthernetII PXEClient::create_arp_reply_to_dhcp_server(const HWAddress<6> &dhcp_server_mac_address) {
-    this->_tftp_hw_address = dhcp_server_mac_address;
+void PXEClient::arp_reply_dhcp_server(Tins::PacketSender &sender, const Tins::HWAddress<6> &dhcp_server_mac_address) {
+    this->_dhcp_hw_address = dhcp_server_mac_address;
     EthernetII eth(dhcp_server_mac_address, this->_client_hw_address);
     auto *arp = new ARP(_dhcp_server_address, _dhcp_client_address, dhcp_server_mac_address, _client_hw_address);
     arp->opcode(ARP::REPLY);
     eth.inner_pdu(arp);
 
     this->_state = ARPRecieved;
-    return eth;
+    sender.send(eth);
 }
 
 
-const Tins::EthernetII PXEClient::create_ping(const Tins::IPv4Address &ip_address,
-                                              const Tins::HWAddress<6> &mac_address) const {
+void PXEClient::ping(Tins::PacketSender &sender, const Tins::IPv4Address &ip_address,
+                     const Tins::HWAddress<6> &mac_address) const {
     if (this->_state > DHCPAcknowledged) {
         EthernetII eth(mac_address, this->_client_hw_address);
         auto *ip = new IP(ip_address, this->_dhcp_client_address);
@@ -139,12 +139,16 @@ const Tins::EthernetII PXEClient::create_ping(const Tins::IPv4Address &ip_addres
         icmp->id((uint16_t) rand());
         ip->inner_pdu(icmp);
         eth.inner_pdu(icmp);
-        return eth;
-    } else return EthernetII();
+        sender.send(eth);
+    }
 }
 
-const Tins::EthernetII PXEClient::create_pong(const Tins::IPv4Address &ip_address,
-                                              const Tins::HWAddress<6> &mac_address, const Tins::ICMP &icmp) const {
+void PXEClient::pong(
+        Tins::PacketSender &sender,
+        const Tins::IPv4Address &ip_address,
+        const Tins::HWAddress<6> &mac_address,
+        const Tins::ICMP &icmp
+) const {
     if (this->_state > DHCPAcknowledged) {
         EthernetII eth(mac_address, this->_client_hw_address);
         auto *ip = new IP(ip_address, this->_dhcp_client_address);
@@ -153,11 +157,11 @@ const Tins::EthernetII PXEClient::create_pong(const Tins::IPv4Address &ip_addres
         new_icmp->type(ICMP::ECHO_REPLY);
         ip->inner_pdu(new_icmp);
         eth.inner_pdu(ip);
-        return eth;
-    } else return EthernetII();
+        sender.send(eth);
+    }
 }
 
-const Tins::EthernetII PXEClient::create_tftp_read() {
+void PXEClient::tftp_read(Tins::PacketSender &sender) {
     EthernetII eth(this->_tftp_hw_address, this->_client_hw_address);
     auto *ip = new IP(this->_tftp_server_address, this->_dhcp_client_address);
     auto *udp = new UDP(69, 1024);
@@ -177,17 +181,17 @@ const Tins::EthernetII PXEClient::create_tftp_read() {
     udp->inner_pdu(tftp);
     ip->inner_pdu(udp);
     eth.inner_pdu(ip);
-    return eth;
+    sender.send(eth);
 }
 
-const IPv4Address &PXEClient::get_dhcp_client_address() {
+const IPv4Address &PXEClient::dhcp_client_address() const {
     return this->_dhcp_client_address;
 }
 
-const ClientState PXEClient::get_state() const {
+const ClientState PXEClient::state() const {
     return _state;
 }
 
-void PXEClient::set_tftp_hw_address(const Tins::HWAddress<6> &mac_address) {
+void PXEClient::tftp_hw_address(const Tins::HWAddress<6> &mac_address) {
     _tftp_hw_address = mac_address;
 }

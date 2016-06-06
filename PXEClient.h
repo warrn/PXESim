@@ -27,49 +27,53 @@ public:
 
     PXEClient();
 
-    const Tins::EthernetII create_dhcp_discover();
+    void dhcp_discover(Tins::PacketSender &sender);
 
-    const Tins::EthernetII create_dhcp_request(
+    void dhcp_request(
+            Tins::PacketSender &sender,
             const Tins::IPv4Address &dhcp_server_address,
             const Tins::IPv4Address &dhcp_client_address
     );
-
-    const Tins::EthernetII create_arp_request_to_dhcp_server();
-
-    const Tins::EthernetII create_arp_reply_to_dhcp_server(
-            const Tins::HWAddress<6> &dhcp_server_mac_address
-    );
-
-    const Tins::EthernetII create_ping(
-            const Tins::IPv4Address &ip_address,
-            const Tins::HWAddress<6> &mac_address
-    ) const;
-
-    const Tins::EthernetII create_pong(
-            const Tins::IPv4Address &ip_address,
-            const Tins::HWAddress<6> &mac_address,
-            const Tins::ICMP &icmp
-    ) const;
 
     const bool dhcp_acknowledged(
             const Tins::DHCP &pdu
     );
 
-    const Tins::EthernetII create_tftp_read();
+    void arp_request_dhcp_server(Tins::PacketSender &sender);
 
-    const Tins::IPv4Address &get_dhcp_client_address();
+    void arp_reply_dhcp_server(
+            Tins::PacketSender &sender,
+            const Tins::HWAddress<6> &dhcp_server_mac_address
+    );
 
-    const ClientState get_state() const;
+    void ping(
+            Tins::PacketSender &sender,
+            const Tins::IPv4Address &ip_address,
+            const Tins::HWAddress<6> &mac_address
+    ) const;
 
-    void set_tftp_hw_address(const Tins::HWAddress<6> &mac_address);
+    void pong(
+            Tins::PacketSender &sender,
+            const Tins::IPv4Address &ip_address,
+            const Tins::HWAddress<6> &mac_address,
+            const Tins::ICMP &icmp
+    ) const;
+
+
+    void tftp_read(Tins::PacketSender &sender);
+
+    const Tins::IPv4Address &dhcp_client_address() const;
+
+    const ClientState state() const;
+
+    void tftp_hw_address(const Tins::HWAddress<6> &mac_address);
 
 private:
-    Tins::HWAddress<6> _client_hw_address, _tftp_hw_address;
+    Tins::HWAddress<6> _client_hw_address, _dhcp_hw_address, _tftp_hw_address;
 
-    Tins::IPv4Address _dhcp_client_address, _dhcp_server_address;
+    Tins::IPv4Address _dhcp_client_address, _dhcp_server_address, _tftp_server_address;
     uint32_t _dhcp_xid;
 
-    Tins::IPv4Address _tftp_server_address;
     uint16_t _tftp_source_port, _tftp_dest_port;
 
     std::queue<std::string> _files_to_download;
