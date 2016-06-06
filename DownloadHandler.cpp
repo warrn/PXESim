@@ -34,9 +34,16 @@ bool DownloadHandler::add_download(const Filename &filename) {
     }
 }
 
-void DownloadHandler::append_data(const Data &data) {
+void DownloadHandler::append_data(const Data &data, uint16_t block_number) {
     if (currently_downloading()) {
-        _current_download->second->insert(_current_download->second->end(), data.begin(), data.end());
+        _current_download->second->add_data(data, block_number);
+    }
+}
+
+void DownloadHandler::set_current_download_sizes(uint16_t block_size, uint32_t total_size) {
+    if (currently_downloading()) {
+        _current_download->second->set_block_size(block_size);
+        _current_download->second->set_total_size(total_size);
     }
 }
 
@@ -60,11 +67,11 @@ void DownloadHandler::delete_current_download() {
     }
 }
 
-const DownloadHandler::Filename DownloadHandler::start_new_download() {
+const Filename DownloadHandler::start_new_download() {
     if (!currently_downloading()) {
         Filename filename = _download_queue.front();
         _download_queue.pop_front();
-        _current_download = new std::pair<Filename, Data *>(filename, new Data);
+        _current_download = new std::pair<Filename, Download *>(filename, new Download(filename));
         return filename;
     } else throw not_found_exception();
 }

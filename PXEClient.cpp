@@ -172,7 +172,7 @@ void PXEClient::tftp_read(Tins::PacketSender &sender) {
     tftp->filename(_download_handler.start_new_download());
     tftp->add_option({
                              "blksize",
-                             "1432"
+                             "4092"
                      });
     tftp->add_option({
                              "tsize",

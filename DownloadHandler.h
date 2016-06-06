@@ -5,14 +5,13 @@
 #ifndef PXESIM_DOWNLOADHANDLER_H
 #define PXESIM_DOWNLOADHANDLER_H
 
-#include <string>
-#include <vector>
 #include <deque>
 #include <map>
 #include <algorithm>
 #include <list>
 #include <exception>
 
+#include "Download.h"
 
 struct not_found_exception : public std::exception {
     const char *what() const throw() {
@@ -31,7 +30,6 @@ class DownloadHandler {
 public:
 
     typedef std::vector<uint8_t> Data;
-    typedef std::string Filename;
 
     DownloadHandler() { };
 
@@ -43,7 +41,9 @@ public:
 
     bool add_download(const Filename &filename);
 
-    void append_data(const Data &data);
+    void append_data(const Data &data, uint16_t block_number);
+
+    void set_current_download_sizes(uint16_t block_size, uint32_t total_size);
 
     void finalize_current_download();
 
@@ -62,9 +62,9 @@ public:
     bool complete() const;
 
 private:
-    std::pair<Filename, Data *> *_current_download;
+    std::pair<Filename, Download *> *_current_download;
     std::deque<Filename> _download_queue;
-    std::map<Filename, Data *> _completed_downloads;
+    std::map<Filename, Download *> _completed_downloads;
 };
 
 

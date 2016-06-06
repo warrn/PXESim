@@ -45,7 +45,10 @@ bool sniff(Sniffer &sniffer) {
             //TFTP Packet
             const auto tftp = pdu->rfind_pdu<RawPDU>().to<TFTP>();
             std::cout << "Found TFTP Packet Type: " << (uint16_t) tftp.opcode() << "\n";
-            std::cout << "Total size: " << tftp.search_option("tsize").second << " bytes.\n";
+            if (tftp.opcode() == TFTP::OPT_ACKNOWLEDGEMENT) {
+                std::cout << "Total size: " << tftp.search_option("tsize").second << " bytes.\n";
+                std::cout << "Block size: " << tftp.search_option("blksize").second << " bytes.\n";
+            }
         } else if (pdu->find_pdu<UDP>() &&
                    (pdu->rfind_pdu<UDP>().dport() == 67 || pdu->rfind_pdu<UDP>().dport() == 68)) {
             // DHCP Packet
