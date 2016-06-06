@@ -62,9 +62,10 @@ void DownloadHandler::delete_current_download() {
 
 const DownloadHandler::Filename DownloadHandler::start_new_download() {
     if (!currently_downloading()) {
-        auto filename = _download_queue.front();
+        Filename filename = _download_queue.front();
         _download_queue.pop_front();
         _current_download = new std::pair<Filename, Data *>(filename, new Data);
+        return filename;
     } else throw not_found_exception();
 }
 

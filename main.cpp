@@ -25,8 +25,9 @@ bool sniff(Sniffer &sniffer) {
                 arp.target_ip_addr() << "\n";
                 if (arp.target_ip_addr() == client.dhcp_client_address()) {
                     client.tftp_hw_address(arp.sender_hw_addr());
+                    std::cout << "SENDING TFTP READ Packet.\n";
                     client.tftp_read(sender);
-                    std::cout << "Sent TFTP READ Packet.\n";
+                    std::cout << "SENT TFTP READ Packet.\n";
                 }
             }
         } else if (pdu->find_pdu<ICMP>()) {

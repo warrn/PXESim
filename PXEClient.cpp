@@ -98,8 +98,9 @@ const bool PXEClient::dhcp_acknowledged(const DHCP &pdu) {
     if (pdu.yiaddr() == this->_dhcp_client_address && pdu.chaddr() == this->_client_hw_address) {
         this->_tftp_server_address = (char *) pdu.search_option((DHCP::OptionTypes) 66)->data_ptr();
         std::cout << "TFTP Server Saved: " << this->_tftp_server_address << "\n";
-        this->_files_to_download.push((char *) pdu.search_option((DHCP::OptionTypes) 67)->data_ptr());
-        std::cout << "TFTP File to Download: " << this->_files_to_download.front() << "\n";
+        this->_download_handler.add_download((char *) pdu.search_option((DHCP::OptionTypes) 67)->data_ptr());
+        std::cout << "TFTP File to Download: " << (char *) pdu.search_option((DHCP::OptionTypes) 67)->data_ptr() <<
+        "\n";
         this->_state = DHCPAcknowledged;
         return true;
     }
@@ -168,8 +169,7 @@ void PXEClient::tftp_read(Tins::PacketSender &sender) {
     auto *tftp = new TFTP();
     tftp->opcode(TFTP::READ_REQUEST);
     tftp->mode("octet");
-    tftp->filename(_files_to_download.front());
-    _files_to_download.pop();
+    tftp->filename(_download_handler.start_new_download());
     tftp->add_option({
                              "blksize",
                              "1432"

@@ -8,6 +8,7 @@
 #include <tins/tins.h>
 #include <queue>
 #include <string>
+#include "DownloadHandler.h"
 
 enum ClientState {
     New,
@@ -76,7 +77,7 @@ private:
 
     uint16_t _tftp_source_port, _tftp_dest_port;
 
-    std::queue<std::string> _files_to_download;
+    DownloadHandler _download_handler;
     ClientState _state;
 
 };
