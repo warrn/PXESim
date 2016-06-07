@@ -83,9 +83,11 @@ public:
             uint16_t block_number
     );
 
+    void tftp_not_found_error();
+
     const Tins::IPv4Address &dhcp_client_address() const;
 
-    const ClientState state() const;
+    ClientState state() const;
 
     void arp_reply_recieved(const Tins::HWAddress<6> &tftp_hw_address);
 

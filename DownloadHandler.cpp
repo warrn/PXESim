@@ -95,7 +95,7 @@ bool DownloadHandler::currently_downloading(const Filename &filename) const {
 }
 
 bool DownloadHandler::currently_downloading() const {
-    return (bool) _current_download;
+    return _current_download != nullptr;
 }
 
 bool DownloadHandler::complete() const {

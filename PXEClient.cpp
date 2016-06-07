@@ -172,29 +172,18 @@ void PXEClient::tftp_read(Tins::PacketSender &sender) {
         auto *tftp = new TFTP();
         tftp->opcode(TFTP::READ_REQUEST);
         tftp->mode("octet");
-        if (_state == ARPRecieved) tftp->filename(_download_handler.start_new_download());
-        tftp->add_option({
-                                 "blksize",
-                                 "1432"
-                         });
-        tftp->add_option({
-                                 "tsize",
-                                 "0"
-                         });
+        tftp->filename(_download_handler.start_new_download());
+        tftp->add_option({"blksize", "1432"});
+        tftp->add_option({"tsize", "0"});
         udp->inner_pdu(tftp);
         ip->inner_pdu(udp);
         eth.inner_pdu(ip);
         sender.send(eth);
-        switch (_state) {
-            case ARPRecieved:
-                _state = TFTPBootRequest;
-                break;
-            case TFTPWaitingConfigRequest:
-                _state = TFTPConfigRequest;
-                break;
-            default:
-                _state = TFTPFilesRequest;
-        }
+
+        if (_state == ARPRecieved) _state = TFTPBootRequest;
+        else if (_state == TFTPWaitingConfigRequest) _state = TFTPConfigRequest;
+        else _state = TFTPFilesRequest;
+
     }
 }
 
@@ -212,16 +201,10 @@ void PXEClient::tftp_ack_options(Tins::PacketSender &sender, uint16_t dest_port,
         ip->inner_pdu(udp);
         eth.inner_pdu(ip);
         sender.send(eth);
-        switch (_state) {
-            case TFTPBootRequest:
-                _state = TFTPBootDownloading;
-                break;
-            case TFTPConfigRequest:
-                _state = TFTPConfigDownloading;
-                break;
-            default:
-                _state = TFTPFilesDownloading;
-        }
+
+        if (_state == TFTPBootRequest) _state = TFTPBootDownloading;
+        else if (_state == TFTPConfigRequest) _state = TFTPConfigDownloading;
+        else _state = TFTPFilesDownloading;
     }
 }
 
@@ -243,6 +226,7 @@ void PXEClient::tftp_ack_data(
         ip->inner_pdu(udp);
         eth.inner_pdu(ip);
         sender.send(eth);
+
         if (_download_handler.current_download_complete()) {
             std::cout << "Download Finished.\n";
             _download_handler.finalize_current_download();
@@ -260,25 +244,28 @@ void PXEClient::tftp_ack_data(
                     _download_handler.add_download(pxelinuxcfg + ip_ss.str().substr(0, specification));
                 // pxelinux.cfg/xxxxxxxx to pxelinux.cfg/x
                 _download_handler.add_download(pxelinuxcfg + "default");
-            } else if (_state == TFTPConfigDownloading) {
-                _state = TFTPWaitingFilesRequest;
-            } else {
-                _state = Completed;
-            }
+                // pxelinux.cfg/default
+            } else if (_state == TFTPConfigDownloading) _state = TFTPWaitingFilesRequest;
+            else _state = Completed;
+
         }
     }
+}
+
+void PXEClient::tftp_not_found_error() {
+    _download_handler.delete_current_download();
+    _state = TFTPWaitingConfigRequest;
 }
 
 const IPv4Address &PXEClient::dhcp_client_address() const {
     return _dhcp_client_address;
 }
 
-const ClientState PXEClient::state() const {
+ClientState PXEClient::state() const {
     return _state;
 }
 
 void PXEClient::arp_reply_recieved(const Tins::HWAddress<6> &tftp_hw_address) {
     _dhcp_hw_address = tftp_hw_address;
     _state = ARPRecieved;
-
 }
