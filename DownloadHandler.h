@@ -51,6 +51,8 @@ public:
 
     void delete_current_download();
 
+    void clear_queue();
+
     bool downloaded(const Filename &filename) const;
 
     bool in_download_queue(const Filename &filename) const;

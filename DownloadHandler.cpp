@@ -2,6 +2,7 @@
 // Created by warnelso on 6/6/16.
 //
 
+#include <iostream>
 #include "DownloadHandler.h"
 
 DownloadHandler::DownloadHandler(Filename filename) {
@@ -30,6 +31,7 @@ bool DownloadHandler::add_download(const Filename &filename) {
         return false; // or currently being downloaded
     else {
         _download_queue.push_back(filename);
+        std::cout << "File added to download queue: " << filename << "\n";
         return true;
     }
 }
@@ -65,6 +67,10 @@ void DownloadHandler::delete_current_download() {
         delete _current_download;
         _current_download = nullptr;
     }
+}
+
+void DownloadHandler::clear_queue() {
+    _download_queue.clear();
 }
 
 const Filename DownloadHandler::start_new_download() {

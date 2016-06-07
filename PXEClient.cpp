@@ -172,7 +172,7 @@ void PXEClient::tftp_read(Tins::PacketSender &sender) {
         auto *tftp = new TFTP();
         tftp->opcode(TFTP::READ_REQUEST);
         tftp->mode("octet");
-        tftp->filename(_download_handler.start_new_download());
+        if (_state == ARPRecieved) tftp->filename(_download_handler.start_new_download());
         tftp->add_option({
                                  "blksize",
                                  "1432"
@@ -247,15 +247,23 @@ void PXEClient::tftp_ack_data(
             std::cout << "Download Finished.\n";
             _download_handler.finalize_current_download();
             if (_state == TFTPFilesDownloading && !_download_handler.complete()) _state = TFTPWaitingFilesRequest;
-            switch (_state) {
-                case TFTPBootDownloading:
-                    _state = TFTPWaitingConfigRequest;
-                    break;
-                case TFTPConfigDownloading:
-                    _state = TFTPWaitingFilesRequest;
-                    break;
-                default:
-                    _state = Completed;
+            else if (_state == TFTPBootDownloading) {
+                _state = TFTPWaitingConfigRequest;
+                const std::string pxelinuxcfg = "pxelinux.cfg/";
+                std::string hw_str = _client_hw_address.to_string();
+                for (char &c: hw_str) if (c == ':') c = '-';
+                _download_handler.add_download(pxelinuxcfg + "01-" + hw_str); // pxelinux.cfg/01-xx-xx-xx-xx-xx-xx
+                std::stringstream ip_ss;
+                ip_ss << std::hex << std::uppercase << std::noshowbase
+                << std::setw(8) << std::setfill('0') << Endian::do_change_endian(_dhcp_client_address);
+                for (uint8_t specification = 8; specification > 0; specification--)
+                    _download_handler.add_download(pxelinuxcfg + ip_ss.str().substr(0, specification));
+                // pxelinux.cfg/xxxxxxxx to pxelinux.cfg/x
+                _download_handler.add_download(pxelinuxcfg + "default");
+            } else if (_state == TFTPConfigDownloading) {
+                _state = TFTPWaitingFilesRequest;
+            } else {
+                _state = Completed;
             }
         }
     }
