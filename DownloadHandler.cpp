@@ -95,3 +95,9 @@ bool DownloadHandler::currently_downloading() const {
 bool DownloadHandler::complete() const {
     return (!_current_download && _download_queue.empty());
 }
+
+bool DownloadHandler::current_download_complete() const {
+    if (currently_downloading()) {
+        return _current_download->second->complete();
+    } else throw not_found_exception();
+}

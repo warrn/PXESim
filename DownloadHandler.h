@@ -61,6 +61,8 @@ public:
 
     bool complete() const;
 
+    bool current_download_complete() const;
+
 private:
     std::pair<Filename, Download *> *_current_download;
     std::deque<Filename> _download_queue;

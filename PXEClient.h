@@ -17,9 +17,15 @@ enum ClientState {
     DHCPAcknowledged,
     ARPRequested,
     ARPRecieved,
-    TFTPRequested,
-    TFTPAcknowledged,
-    Finished,
+    TFTPBootRequest,
+    TFTPBootDownloading,
+    TFTPWaitingConfigRequest,
+    TFTPConfigRequest,
+    TFTPConfigDownloading,
+    TFTPWaitingFilesRequest,
+    TFTPFilesRequest,
+    TFTPFilesDownloading,
+    Completed,
     Terminated = -1
 };
 
@@ -81,14 +87,14 @@ public:
 
     const ClientState state() const;
 
-    void tftp_hw_address(const Tins::HWAddress<6> &mac_address);
+    void arp_reply_recieved(const Tins::HWAddress<6> &tftp_hw_address);
 
     const Tins::HWAddress<6> &get_client_hw_address() const { return _client_hw_address; }
 
 private:
-    Tins::HWAddress<6> _client_hw_address, _dhcp_hw_address, _tftp_hw_address;
+    Tins::HWAddress<6> _client_hw_address, _dhcp_hw_address;
 
-    Tins::IPv4Address _dhcp_client_address, _dhcp_server_address, _tftp_server_address;
+    Tins::IPv4Address _dhcp_client_address, _dhcp_server_address;
     uint32_t _dhcp_xid;
 
     DownloadHandler _download_handler;
