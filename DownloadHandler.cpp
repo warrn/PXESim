@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <regex>
 #include "DownloadHandler.h"
 #include "DownloadHash.h"
 
@@ -38,6 +39,18 @@ bool DownloadHandler::add_download(const Filename &filename) {
         _download_queue.push_back(filename);
         std::cout << "File added to download queue: " << filename << "\n";
         return true;
+    }
+}
+
+void DownloadHandler::add_downloads_from_config() {
+    if (!downloaded("pxelinux.cfg")) throw not_found_exception();
+    Download *file = _completed_downloads["pxelinux.cfg"];
+    std::string filestr((char *) file->data(), file->size());
+    std::smatch matches;
+    std::regex regex("(kernel [^ \\n\\r]*|initrd=[^ \\n\\r]*)");
+    while (std::regex_search(filestr, matches, regex)) {
+        add_download(matches.begin()->str().substr(7));
+        filestr = matches.suffix().str();
     }
 }
 

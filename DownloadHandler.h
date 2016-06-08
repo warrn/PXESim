@@ -41,6 +41,8 @@ public:
 
     bool add_download(const Filename &filename);
 
+    void add_downloads_from_config();
+
     void rename_current_downlaod(const Filename &new_filename);
 
     void append_data(const Data &data, uint16_t block_number);

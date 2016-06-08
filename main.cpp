@@ -50,7 +50,7 @@ bool sniff(Sniffer &sniffer, PacketSender &sender, PXEClient &client) {
             //TFTP Packet
             const auto udp = pdu->rfind_pdu<UDP>();
             const auto tftp = pdu->rfind_pdu<RawPDU>().to<TFTP>();
-            std::cout << "Found TFTP Packet Type: " << (uint16_t) tftp.opcode() << "\n";
+            // std::cout << "Found TFTP Packet Type: " << (uint16_t) tftp.opcode() << "\n";
 
             if (tftp.opcode() == TFTP::OPT_ACKNOWLEDGEMENT) {
                 std::cout << "Total size: " << tftp.search_option("tsize").second << " bytes.\n";
@@ -60,7 +60,7 @@ bool sniff(Sniffer &sniffer, PacketSender &sender, PXEClient &client) {
                                         (uint32_t) atoi(tftp.search_option("tsize").second.data()));
 
             } else if (tftp.opcode() == TFTP::DATA) {
-                std::cout << "Block recieved: #" << tftp.block() << ".\n";
+                //std::cout << "Block recieved: #" << tftp.block() << ".\n";
                 client.tftp_ack_data(sender, udp.sport(), tftp.data(), tftp.block());
 
             } else if (tftp.opcode() == TFTP::ERROR) {

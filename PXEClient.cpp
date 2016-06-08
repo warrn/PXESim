@@ -251,6 +251,7 @@ void PXEClient::tftp_ack_data(
                 _download_handler.add_download(pxelinuxcfg + "default");
                 // pxelinux.cfg/default
             } else if (_state == TFTPConfigDownloading) {
+                _download_handler.add_downloads_from_config();
                 _state = TFTPWaitingFilesRequest;
             } else _state = Completed;
 
