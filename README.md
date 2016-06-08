@@ -20,3 +20,9 @@ PXE is based on the following processes:
 In order to test PXEServers, it becomes necessary to test clients. However, to massively test to capability of a server
 to handle many clients, the overhead to replicate the clients is incredibly costly. The objective of PXESim is to simulate
 the transactions involved on a massive scale with as little overhead as possible.
+
+---
+**Requirements**
+
+ * libssl-dev (for md5)
+ * libtins (for packet creation, capture, and interface control)
