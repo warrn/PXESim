@@ -11,7 +11,7 @@
 #include <list>
 #include <exception>
 
-#include "Download.h"
+#include "DownloadFile.h"
 
 struct not_found_exception : public std::exception {
     const char *what() const throw() {
@@ -31,7 +31,7 @@ public:
 
     typedef std::vector<uint8_t> Data;
 
-    DownloadHandler() { };
+    DownloadHandler() : _current_download(nullptr) { };
 
     DownloadHandler(Filename filename);
 
@@ -41,13 +41,17 @@ public:
 
     bool add_download(const Filename &filename);
 
+    void rename_current_downlaod(const Filename &new_filename);
+
     void append_data(const Data &data, uint16_t block_number);
 
-    void set_current_download_sizes(uint16_t block_size, uint32_t total_size);
+    void set_current_download_sizes(uint32_t total_size);
 
     void finalize_current_download();
 
-    const Filename start_new_download();
+    const Filename start_new_download_file();
+
+    const Filename start_new_download_hash();
 
     void delete_current_download();
 

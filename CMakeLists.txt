@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(PXESim)
 include_directories(libtins-TFTP)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -ltins -g")
-set(SOURCE_FILES main.cpp PXEClient.cpp PXEClient.h libtins-TFTP/tftp.cpp libtins-TFTP/tftp.h DownloadHandler.cpp DownloadHandler.h Download.cpp Download.h)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -ltins -lssl -lcrypto -L/usr/local/opt/openssl/lib -I/usr/local/opt/openssl/include -g")
+set(SOURCE_FILES main.cpp PXEClient.cpp PXEClient.h libtins-TFTP/tftp.cpp libtins-TFTP/tftp.h DownloadHandler.cpp DownloadHandler.h DownloadFile.cpp DownloadFile.h DownloadHash.cpp DownloadHash.h Download.h constants.h)
 add_executable(PXESim ${SOURCE_FILES})

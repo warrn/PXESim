@@ -172,8 +172,8 @@ void PXEClient::tftp_read(Tins::PacketSender &sender) {
         auto *tftp = new TFTP();
         tftp->opcode(TFTP::READ_REQUEST);
         tftp->mode("octet");
-        tftp->filename(_download_handler.start_new_download());
-        tftp->add_option({"blksize", "1432"});
+        tftp->filename(_download_handler.start_new_download_hash());
+        tftp->add_option({"blksize", BLOCK_SIZE_STR});
         tftp->add_option({"tsize", "0"});
         udp->inner_pdu(tftp);
         ip->inner_pdu(udp);
@@ -187,14 +187,13 @@ void PXEClient::tftp_read(Tins::PacketSender &sender) {
     }
 }
 
-void PXEClient::tftp_ack_options(Tins::PacketSender &sender, uint16_t dest_port, uint16_t block_size,
-                                 uint32_t total_size) {
+void PXEClient::tftp_ack_options(Tins::PacketSender &sender, uint16_t dest_port, uint32_t total_size) {
     if (_state == TFTPBootRequest || _state == TFTPConfigRequest || _state == TFTPFilesRequest) {
         EthernetII eth(_dhcp_hw_address, _client_hw_address);
         auto *ip = new IP(_dhcp_server_address, _dhcp_client_address);
         auto *udp = new UDP(dest_port, 1024);
         auto *tftp = new TFTP();
-        _download_handler.set_current_download_sizes(block_size, total_size);
+        _download_handler.set_current_download_sizes(total_size);
         tftp->opcode(TFTP::ACKNOWLEDGEMENT);
         tftp->block(0);
         udp->inner_pdu(tftp);
@@ -203,7 +202,11 @@ void PXEClient::tftp_ack_options(Tins::PacketSender &sender, uint16_t dest_port,
         sender.send(eth);
 
         if (_state == TFTPBootRequest) _state = TFTPBootDownloading;
-        else if (_state == TFTPConfigRequest) _state = TFTPConfigDownloading;
+        else if (_state == TFTPConfigRequest) {
+            _download_handler.clear_queue();
+            _download_handler.rename_current_downlaod("pxelinux.cfg");
+            _state = TFTPConfigDownloading;
+        }
         else _state = TFTPFilesDownloading;
     }
 }
@@ -245,8 +248,9 @@ void PXEClient::tftp_ack_data(
                 // pxelinux.cfg/xxxxxxxx to pxelinux.cfg/x
                 _download_handler.add_download(pxelinuxcfg + "default");
                 // pxelinux.cfg/default
-            } else if (_state == TFTPConfigDownloading) _state = TFTPWaitingFilesRequest;
-            else _state = Completed;
+            } else if (_state == TFTPConfigDownloading) {
+                _state = TFTPWaitingFilesRequest;
+            } else _state = Completed;
 
         }
     }

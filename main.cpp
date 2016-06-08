@@ -3,10 +3,8 @@
 
 using namespace Tins;
 
-PacketSender sender("eth1");
-PXEClient client;
 
-bool sniff(Sniffer &sniffer) {
+bool sniff(Sniffer &sniffer, PacketSender &sender, PXEClient &client) {
     // TODO: Refactor this mess
 
     PDU *pdu = sniffer.next_packet().pdu();
@@ -59,7 +57,6 @@ bool sniff(Sniffer &sniffer) {
                 std::cout << "Block size: " << tftp.search_option("blksize").second << " bytes.\n";
 
                 client.tftp_ack_options(sender, udp.sport(),
-                                        (uint16_t) atoi(tftp.search_option("blksize").second.data()),
                                         (uint32_t) atoi(tftp.search_option("tsize").second.data()));
 
             } else if (tftp.opcode() == TFTP::DATA) {
@@ -88,8 +85,6 @@ bool sniff(Sniffer &sniffer) {
             if (dhcp.type() == DHCP::ACK) {
                 std::cout << "Acknowledged IP: " << dhcp.yiaddr().to_string() << "\n";
                 std::cout << "Client Acknowledged? " << client.dhcp_acknowledged(dhcp) << "\n";
-                client.arp_request_dhcp_server(sender);
-                std::cout << "ARP Request Sent\n";
             }
 
             if (dhcp.type() == DHCP::NAK) {
@@ -104,18 +99,21 @@ bool sniff(Sniffer &sniffer) {
 }
 
 int main() {
+    PacketSender sender("eth1");
+    PXEClient client;
     SnifferConfiguration config;
     config.set_promisc_mode(true);
     config.set_timeout(1);
     config.set_filter("icmp or arp or udp port 68 or udp port 1024");
     Sniffer sniffer("eth1", config);
-    client.dhcp_discover(sender);
     while (client.state() != Terminated && client.state() != Completed) {
-        sniff(sniffer);
         if (client.state() == ARPRecieved || client.state() == TFTPWaitingConfigRequest ||
             client.state() == TFTPWaitingFilesRequest) {
             client.tftp_read(sender);
             std::cout << "Sent TFTP READ Packet.\n";
         }
+        if (client.state() == New) client.dhcp_discover(sender);
+        if (client.state() == DHCPAcknowledged) client.arp_request_dhcp_server(sender);
+        sniff(sniffer, sender, client);
     }
 }

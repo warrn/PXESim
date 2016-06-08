@@ -1,13 +1,16 @@
 //
-// Created by warnelso on 6/6/16.
+// Created by warnelso on 6/8/16.
 //
 
 #ifndef PXESIM_DOWNLOAD_H
 #define PXESIM_DOWNLOAD_H
 
-
+#include <exception>
+#include <cstdint>
 #include <string>
 #include <vector>
+#include <iostream>
+#include "constants.h"
 
 typedef std::string Filename;
 typedef std::vector<uint8_t> Data;
@@ -20,23 +23,31 @@ struct block_does_not_fit : public std::exception {
 
 class Download {
 public:
-    Download(const Filename &filename, uint32_t total_size = 0, uint16_t block_size = 4092) :
-            _total_size(total_size), _block_size(block_size), _filename(filename), _blocks_completed(0) { }
 
-    void add_data(const Data &data, uint16_t block_number);
+    Download() : _blocks_completed(0), _total_size(0) { }
 
-    void set_total_size(uint32_t total_size) { _total_size = total_size; }
+    ~Download() { }
 
-    void set_block_size(uint16_t block_size) { _block_size = block_size; }
+    void total_size(uint32_t total_size) { _total_size = total_size; }
 
-    bool complete() const;
+    void filename(const Filename &filename) { _filename = filename; }
 
-private:
-    Filename _filename;
-    Data _data;
+    const Filename &filename() const { return _filename; }
 
-    uint16_t _blocks_completed, _block_size;
+    virtual void add_data(const Data &data, uint16_t block_number) { };
+
+    virtual const uint8_t *data() const { return nullptr; }
+
+    virtual uint32_t size() const { return 0; }
+
+    virtual void finalize() { }
+
+    bool complete() const { return (uint32_t) _blocks_completed * BLOCK_SIZE >= _total_size; }
+
+protected:
     uint32_t _total_size;
+    uint16_t _blocks_completed;
+    Filename _filename;
 
 };
 

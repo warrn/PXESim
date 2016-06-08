@@ -69,12 +69,7 @@ public:
 
     void tftp_read(Tins::PacketSender &sender);
 
-    void tftp_ack_options(
-            Tins::PacketSender &sender,
-            uint16_t dest_port,
-            uint16_t block_size,
-            uint32_t total_size
-    );
+    void tftp_ack_options(Tins::PacketSender &sender, uint16_t dest_port, uint32_t total_size);
 
     void tftp_ack_data(
             Tins::PacketSender &sender,
