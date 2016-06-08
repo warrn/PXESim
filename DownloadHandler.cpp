@@ -63,6 +63,8 @@ void DownloadHandler::finalize_current_download() {
     if (!currently_downloading()) throw not_found_exception();
     else if (!downloaded(_current_download->first)) {
         _current_download->second->finalize();
+        std::cout << "Finalized File Data: \n" <<
+        std::string((const char *) _current_download->second->data(), _current_download->second->size()) << "\n";
         _completed_downloads[_current_download->first] = _current_download->second;
         _current_download->second = nullptr;
         delete _current_download;

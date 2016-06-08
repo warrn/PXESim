@@ -172,7 +172,9 @@ void PXEClient::tftp_read(Tins::PacketSender &sender) {
         auto *tftp = new TFTP();
         tftp->opcode(TFTP::READ_REQUEST);
         tftp->mode("octet");
-        tftp->filename(_download_handler.start_new_download_hash());
+        if (_state == ARPRecieved || _state == TFTPWaitingFilesRequest)
+            tftp->filename(_download_handler.start_new_download_hash());
+        else tftp->filename(_download_handler.start_new_download_file());
         tftp->add_option({"blksize", BLOCK_SIZE_STR});
         tftp->add_option({"tsize", "0"});
         udp->inner_pdu(tftp);
